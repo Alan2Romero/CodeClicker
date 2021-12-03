@@ -1,0 +1,285 @@
+FPS = 30
+import pygame
+from pygame import mixer
+# Inicia el Pygame
+pygame.init()
+# # Esto funciona como un "reloj" adentro del juego.
+fpsClock = pygame.time.Clock()
+
+# Musica de fondo
+## Nota: Para que el Pygame pueda leer la musica, debe estar en el formato .wav
+mixer.music.load('musicafondo.wav')
+## Nota: Para que la musica se repita constantemente es necesario poner un -1.
+mixer.music.play(-1)
+# SFX
+cookie_sonido = mixer.Sound('clicksonido.wav')
+upgrades_sonido = mixer.Sound('upgradesonido.wav')
+
+# Variables
+REP = 1
+REP2 = 1
+REP3 = 1
+REP4 = 1
+cursores = 0
+cpus = 0
+works = 0
+facil = 0
+
+# PUNTAJES
+CODES = 0
+## Esto agarra la fuente de letra que va a usar el texto del puntaje y de los CPS.
+font = pygame.font.Font('freesansbold.ttf', 22)
+## Coordenadas
+textoX = 560
+textoY = 420
+## Funcion para mostrar en pantalla el puntaje
+def mostrar_cookies(x,y):
+    ## Se almacena como se veria el "score" en una variable. Si o si siempre las variables que se quieran mostrar
+    ## hay que convertirlos en string. El valor 255,255,255 es su valor RGB(Colores).
+    score = font.render(str(int(CODES)), True, (255,255,255))
+    pantalla.blit(score, (x, y))
+
+CPS = 0
+texto2X = 400
+texto2Y = 450
+
+def mostrar_CPS(x,y):
+    cps = font.render("CPS:" + str(int(CPS)), True, (255,255,255))
+    pantalla.blit(cps, (x, y))
+## Coordenadas
+texto3X = 150
+texto3Y = 80
+## Funcion para escribirlas en pantalla
+def Cursor(x,y):
+    curs = font.render("Cursor:" + str(int(15*REP)), True, (255,255,255))
+    pantalla.blit(curs, (x, y))
+cantidadX = 150
+cantidadY = 110
+def Cantidad_cursor(x,y):
+    cantidad_cursor = font.render("Cursors:" + str(int(cursores)), True, (255,255,255))
+    pantalla.blit(cantidad_cursor, (x, y))
+
+texto4X = 150
+texto4Y= 240
+def CPU(x,y):
+    c = font.render("CPU:" + str(int(100*REP2)), True, (255,255,255))
+    pantalla.blit(c, (x, y))
+cantidad2X = 150
+cantidad2Y = 270
+def Cantidad_cpu(x,y):
+    cantidad_cpu = font.render("CPUS:" + str(int(cpus)), True, (255,255,255))
+    pantalla.blit(cantidad_cpu, (x, y))
+
+texto5Y = 380
+texto5X = 120
+def WORKER(x,y):
+    work = font.render("Workers:" + str(int(1000*REP3)), True, (255,255,255))
+    pantalla.blit(work, (x, y))
+cantidad3X = 120
+cantidad3Y = 410
+def cantidad_workers(x,y):
+    cantidad_worker = font.render("WORKERS:" + str(int(works)), True, (255,255,255))
+    pantalla.blit(cantidad_worker, (x, y))
+texto6Y = 540
+texto6X = 100
+def FACILITY(x,y):
+    facility = font.render("Facility:" + str(int(10000*REP4)), True,(255,255,255))
+    pantalla.blit(facility, (x, y))
+cantidad4X = 100
+cantidad4Y = 570
+def cantidad_facility(x,y):
+    cantidad_facilities = font.render("Facilities:" + str(int(facil)), True, (255,255,255))
+    pantalla.blit(cantidad_facilities, (x, y))
+
+# Crea la pantalla
+pantalla = pygame.display.set_mode((800,600))
+
+# Fondo del juego
+fondo = pygame.image.load('fondo.png')
+
+# Titulo Y Icono
+pygame.display.set_caption("C0D3 Clicker")
+icono = pygame.image.load('logodeljuego.png')
+pygame.display.set_icon(icono)
+
+
+
+## Imagenes
+# Imagen Cookie:
+objecode = pygame.image.load('galletita.png')
+# Imagen logos de mejoras:
+imageupgrade = pygame.image.load('boton_template.png')
+# Cursor
+imagecursor = pygame.image.load('imagecursor.png')
+imagecpu = pygame.image.load('imagecpu.png')
+imageworker = pygame.image.load('imageworker.png')
+imagefacility = pygame.image.load('imagefacility.png')
+
+# Crea la clase "cookie" (Crear una clase en Pygame sirve para poder crear mas de estas, es decir que con lo que hice
+# si quiero puedo tener 2 galletas en diferentes coordenadas)
+class Cookie():
+    # Esta definicion cumple dos funciones: La funcion de saber en base a una variable en que posicion ponerse, que imagen
+    # Usar Y a cuanto de escala se quiere.
+    # Por ultimo cumple el proposito de ser un "catalizador" para chequear si se encuentra clickeado el objeto o no.
+    ## Nota: Como catalizador me refiero a que sirve para empezar el IF de Draw.
+    def __init__(self, x, y, image, scale):
+        anchura = image.get_width()
+        altura = image.get_height()
+        self.image = pygame.transform.scale(image, (int(anchura * scale), int(altura * scale)))
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x,y)
+        self.clicked = False
+
+    def draw(self):
+        # Variable que servira como catalizador de diferentes funciones (Por ejemplo sumar cookies)
+        action = False
+        # Obtiene la posicion del mouse
+        pos = pygame.mouse.get_pos()
+
+        # Chequea si se clickea la imagen
+        if self.rect.collidepoint(pos):
+            if pygame.mouse.get_pressed()[0] == 1 and self.clicked == False:
+                self.clicked = True
+                action = True
+        # Esto chequea si el mouse dejo de ser apretado.
+        if pygame.mouse.get_pressed()[0] == 0:
+            self.clicked = False
+        # Esto hace que la cookie aparezca en la pantalla
+        pantalla.blit(self.image, (self.rect.x, self.rect.y))
+
+        return action
+
+class Upgrades():
+    def __init__(self, x, y, image, scale):
+        anchura = image.get_width()
+        altura = image.get_height()
+        self.image = pygame.transform.scale(image, (int(anchura * scale), int(altura * scale)))
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x,y)
+        self.click = False
+
+    def draw(self):
+        accion = False
+        pos = pygame.mouse.get_pos()
+
+        if self.rect.collidepoint(pos):
+            if pygame.mouse.get_pressed()[0] == 1 and self.click == False:
+                self.click = True
+                accion = True
+        if pygame.mouse.get_pressed()[0] == 0:
+            self.click = False
+        pantalla.blit(self.image, (self.rect.x, self.rect.y))
+
+        return accion
+
+class Imagenes():
+    def __init__(self, x, y, image, scale):
+        anchura = image.get_width()
+        altura = image.get_height()
+        self.image = pygame.transform.scale(image, (int(anchura * scale), int(altura * scale)))
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x,y)
+        self.clicked = False
+
+    def draw(self):
+        pantalla.blit(self.image, (self.rect.x, self.rect.y))
+
+# Objeto CODE (Es el cual van a clickear para ganar "CODES")
+cookie = Cookie(538, 130, objecode, 0.8)
+# Mejoras (Con esto aumentan los CPS y por consiguiente aumentan la cantidad de CODES)
+cursor = Upgrades(10, 30, imageupgrade, 1)
+cpu = Upgrades(10,180, imageupgrade, 1)
+workers = Upgrades(10,330, imageupgrade, 1)
+facilities = Upgrades(10,480, imageupgrade, 1)
+# Imagenes
+cursor_im = Imagenes(40, 60, imagecursor, 2)
+cpu_im = Imagenes(40, 215, imagecpu, 2)
+workers_im = Imagenes(40, 370, imageworker, 2)
+facilities_im = Imagenes(40, 520, imagefacility, 2)
+
+
+# Objetos Mejora (Se van a utilizar para poder incrementar la ganancia de "CODES")
+
+
+# Cada vez que se mejora algo, aumentan los Codes Per Second Y con eso se calcula cuantos Codes se gana en base al reloj
+# que serian los "FPS"
+
+def COOKIES_PER_SECOND():
+    global CODES
+    CODES += CPS/FPS
+    int(CODES)
+
+
+# Bucle para que la pantalla no se cierre Y que contendra mayoria del codigo tipo Evento del pygame
+running = True
+while running:
+
+    ##Nota importante, si uno esta haciendo un juego en donde el jugador o enemigos tengan que moverse
+    ##Meter este fondo en el bucle provoca que los personajes se muevan mucho mas lento (a veces ocurre eso)
+    ##asi que la solucion es solamente incrementar los valores en los cuales se mueven los personajes
+
+    # Esto añade el fondo y pide coordenadas en donde meterlo
+    # Nota: el .blit sirve para meter algo a la pantalla. Esto en particular mete el fondo.png como fondo de pantalla.
+    pantalla.blit(fondo,(0,0))
+    # Utiliza la funcion draw creada en la Clase "Cookie". Cumple dos funciones:
+    # Cumple una funcion de dibujar la "cookie" en la pantalla
+    # Cumple una funcion Booleana, es decir que si el usuario le da click le suma +1 a la cantida de CODES (Que es la moneda del juego)
+    if cookie.draw():
+        cookie_sonido.play()
+        CODES += 1
+
+    if cursor.draw():
+        if CODES >= 15*REP:
+            upgrades_sonido.play()
+            CODES-=15*REP
+            REP+=0.10
+            cursores+=1
+            CPS+= 1
+    if cpu.draw():
+        if CODES >= 100 * REP2:
+            upgrades_sonido.play()
+            CODES -= 100 * REP2
+            REP2 += 0.25
+            cpus+=1
+            CPS += 10
+    if workers.draw():
+        if CODES >= 1000 * REP3:
+            upgrades_sonido.play()
+            CODES -= 1000 * REP3
+            REP3 += 0.40
+            works+=1
+            CPS += 100
+    if facilities.draw():
+        if CODES >= 10000 * REP4:
+            upgrades_sonido.play()
+            CODES -= 10000 * REP4
+            REP4 += 0.50
+            facil+=1
+            CPS += 1000
+
+    cursor_im.draw()
+    cpu_im.draw()
+    workers_im.draw()
+    facilities_im.draw()
+
+    # Chequea para ver si el usuario apreta la X, ya que en PYGAME toda interaccion del usuario es considerada
+    # un evento
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    # Llamado de funciones
+    mostrar_cookies(textoX, textoY)
+    mostrar_CPS(texto2X, texto2Y)
+    Cursor(texto3X, texto3Y)
+    Cantidad_cursor(cantidadX,cantidadY)
+    Cantidad_cpu(cantidad2X, cantidad2Y)
+    cantidad_workers(cantidad3X, cantidad3Y)
+    cantidad_facility(cantidad4X, cantidad4Y)
+    CPU(texto4X, texto4Y)
+    WORKER(texto5X, texto5Y)
+    FACILITY(texto6X, texto6Y)
+    COOKIES_PER_SECOND()
+    # Esto actualiza la pantalla de tu juego (ES ultra importante al igual que el pygame.init())
+    pygame.display.update()
+    fpsClock.tick(FPS)
